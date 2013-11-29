@@ -5,12 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>George McIntosh</title>
+  <title>VCR and Aruba - George McIntosh</title>
   <meta name="author" content="George McIntosh">
 
   
-  <meta name="description" content="Writing some tests recently, as is often the case, I found myself reaching for Joda Time. This library,
-as most Java devs know, is less painful to &hellip;">
+  <meta name="description" content="I&#8217;m working on a few little command-line utilities at the moment, written in Ruby. They all use a web service somewhere along the way. This &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -19,7 +18,7 @@ as most Java devs know, is less painful to &hellip;">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://georgemcntosh.com/">
+  <link rel="canonical" href="http://georgemcntosh.com/vcr-and-aruba/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <script src="/javascripts/modernizr-2.0.js"></script>
@@ -76,152 +75,12 @@ as most Java devs know, is less painful to &hellip;">
 </nav>
   <div id="main">
     <div id="content">
-      <div class="blog-index">
+      <div>
+<article class="hentry" role="article">
   
-  
-  
-    <article>
-      
   <header>
     
-      <h1 class="entry-title"><a href="/joann/">JoAnn</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-11-29T11:25:00+00:00" pubdate data-updated="true">Nov 29<span>th</span>, 2013</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Writing some tests recently, as is often the case, I found myself reaching for <a href="http://joda.org/joda-time">Joda Time</a>. This library,
-as most Java devs know, is less painful to deal with than the date utilities that the JDK ships with. The other neat thing about it is,
-you can set the system time - well, Joda&#8217;s view of it - to whatever you want. Very handy for testing code that might at some point create dates.</p>
-
-<p>Anyways, a typical way of using Joda time in a test looks something like this</p>
-
-<pre><code>class TestSomething {
-
-    @Test
-    void testthings() {
-
-        DateTimeUtils.setCurrentMillisFixed(1385554748577L)
-
-        // do some things
-
-    }
-
-    @After
-    void reset() {
-
-        DateTimeutils.setCurrentMillisSystem()
-
-    }
-
-}
-</code></pre>
-
-<p>A few things wrong here. First, it&#8217;s tedious having to work in milliseconds. Second it&#8217;s not especially legible, and thirdly you have to remember to reset the time to the real time <em>in a teardown method</em> in case your test fails.</p>
-
-<p>So I came up with <a href="https://github.com/georgecodes/joann">JoAnn</a>, which makes things a bit simpler. JoAnn is so called because it&#8217;s a <strong>Jo</strong>da <strong>Ann</strong>otation. It looks a bit like this</p>
-
-<pre><code>@Test
-@Joda(1385554748577L)
-void testthings() {
-    // do some things
-}
-</code></pre>
-
-<p>That&#8217;s (almost) it. No time fiddling bleeding into your tests, no need to remember to tear it down. Just the annotation. Oh, and a way of getting it invoked. You can use either a JUnit runner, or a JUnit rule, it makes no difference. I&#8217;ve provided both</p>
-
-<h2>With a rule</h2>
-
-<pre><code>class MyTests {
-
-  @Rule public JodaRule rule = new JodaRule()
-
-}
-</code></pre>
-
-<h2>With a runner</h2>
-
-<pre><code>@RunWith(JodaAwareJUnit4Runner)
-class MyTests {
-
-}
-</code></pre>
-
-<p>It gets even less tedious.</p>
-
-<p>You don&#8217;t have to use milliseconds to set the time. Set a timestamp instead, and JoAnn will assume you meant an ISO8601 format</p>
-
-<pre><code>@Test
-@Joda(timestamp = "2013-11-29T10:13:22.192Z")
-void testTheThings() {}
-</code></pre>
-
-<p>Or there are a few more out of the box:</p>
-
-<pre><code>@Test
-@Joda(timestamp = '2013-12-25', format = Format.YYYYMMDD)
-void testMoreStuff() {}
-
-@Test
-@Joda(timestamp = '2012-11-19 13:03:22', format = Format.YYYYMMDD_HHMMSS)
-void keepOnTesting() {}
-</code></pre>
-
-<p>Want to see the code? It&#8217;s on <a href="https://github.com/georgecodes/joann">GitHub</a></p>
-
-<p>Want to use it in a Maven project? I&#8217;m hosting it myself for now:</p>
-
-<pre><code>&lt;dependencies&gt;
-  &lt;dependency&gt;
-        &lt;groupId&gt;com.elevenware&lt;/groupId&gt;
-        &lt;artifactId&gt;joann&lt;/artifactId&gt;
-        &lt;version&gt;1.0&lt;/version&gt;
-        &lt;scope&gt;test&lt;/scope&gt;
-    &lt;/dependency&gt;
-&lt;/dependencies&gt;
-
-&lt;repositories&gt;
-    &lt;repository&gt;
-        &lt;snapshots&gt;
-            &lt;enabled&gt;false&lt;/enabled&gt;
-        &lt;/snapshots&gt;
-        &lt;id&gt;elevenware-releases&lt;/id&gt;
-        &lt;url&gt;http://maven.elevenware.com/repo/releases&lt;/url&gt;
-    &lt;/repository&gt;
-&lt;/repositories&gt;
-</code></pre>
-
-<p>Enjoy.</p>
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/vcr-and-aruba/">VCR and Aruba</a></h1>
+      <h1 class="entry-title">VCR and Aruba</h1>
     
     
       <p class="meta">
@@ -244,7 +103,7 @@ void keepOnTesting() {}
   </header>
 
 
-  <div class="entry-content"><p>I&#8217;m working on a few little command-line utilities at the moment, written in Ruby. They all use a web service somewhere along the way. This raised an interesting question: How do I test these things?</p>
+<div class="entry-content"><p>I&#8217;m working on a few little command-line utilities at the moment, written in Ruby. They all use a web service somewhere along the way. This raised an interesting question: How do I test these things?</p>
 
 <p>Obviously, when testing individual components, I can use something like the excellent <a href="https://github.com/vcr/vcr">VCR</a> library. And for testing the CLI, I&#8217;m using Cucumber and <a href="https://github.com/cucumber/aruba">Aruba</a>. As a bit of background, Aruba extends Cucumber by letting you invoke console commands, and capture the stdout for matching in your feature files. This presented a small problem. VCR works by hooking itself into your HTTP library at a really low level, but Aruba launches my gem in a whole new process, which won&#8217;t be under the control of my test code.</p>
 
@@ -489,22 +348,16 @@ void keepOnTesting() {}
 
 <p>Have fun!</p>
 </div>
-  
-  
 
 
-    </article>
-  
-  
-    <article>
+  <footer>
+    <p class="meta">
       
-  <header>
-    
-      <h1 class="entry-title"><a href="/whats-my-job/">What&#8217;s My Job, Again?</a></h1>
-    
-    
-      <p class="meta">
-        
+  
+
+<span class="byline author vcard">Posted by <span class="fn">George McIntosh</span></span>
+
+      
 
 
 
@@ -516,65 +369,44 @@ void keepOnTesting() {}
   
 
 
-<time datetime="2012-11-29T13:04:00+00:00" pubdate data-updated="true">Nov 29<span>th</span>, 2012</time>
-        
-      </p>
+<time datetime="2013-06-29T16:08:00+01:00" pubdate data-updated="true">Jun 29<span>th</span>, 2013</time>
+      
+
+
+    </p>
     
-  </header>
-
-
-  <div class="entry-content"><p>For years now, it’s been an in-joke amongst my friends – few of whom work in IT in any way at all – that my job is to “fix computers”. It all started back when I was a software engineer for an EFT vendor, and was on a 24 hour support rota. One of my friends assumed that, when the pager – remember them? – went off, it was so that I could slide away and fix someone’s computer. Why? Because she had very little idea what I actually did, even though she knew my job title.</p>
-
-<p>Similarly, my parents never really grokked what I do, either. At one point my father asked “so you make up your own programs?” having mildly grasped that there was even such a thing as a ‘program’ not long before. “Well, not exactly my own, but yes” was the best I could do. According to my girlfriend, I “work with that complete gobbledegook that makes no sense”; inf fact, I’m reliably informed, when anyone else asks her what I do for a living, the reply is along the lines of “he puts a load of gobbledegook on a screen”.</p>
-
-<p>The point of this post is not, however, to ridicule civilians for not understanding the software lifecycle, or anything else. It’s not to ridicule them at all.</p>
-
-<p>It’s because I, too, struggle to actually define what I do these days.</p>
-
-<p>This is a brand new blog, to replace my most recent attempt at blogging, which was – and this is pertinent – called <a href="http://georgecodes.com">George Codes</a>. There are two reasons I’m moving away from that. The first is quite pragmatic: up until very recently, the domain name georgemcintosh.com has been selfishly hogged by some American heating company or something, and I’ve been unable to get my paws on it. By chance, I checked recently, and it was available, finally, so vanity won out, and I grabbed it.</p>
-
-<p>The other reason is, I’m not sure “George codes” really adequately captures what I do any more. I mean, I do still write code, but I noticed a while back that, whenever anyone asked me the inevitable “so what do you do for a living?”, my answer stopped starting with the words “I am a” and began starting with a vague description of what I do. “I build software”, or “Oh, I build web apps”, or something else. Which is true. I do that. But I do a lot of other things, too. I just don’t think “coder”, or “developer”, or “programmer” or any other word that means “writes source code”, cut the mustard any more.</p>
-
-<p><strong>I am not my stack, dammit</strong></p>
-
-<p>I’ve never been a fan of being described as a “<something> developer”. Whether that something is a language – I hate being described by recruiters as a “Java developer”, especially since I haven’t written a line of Java in over 2 years – or a framework – some might currently say I’m a “Grails developer” – or even an entire field, such as “web developer”, the term always seems to do me a dis-service. I am not my stack. I am not pigeon-holed that way. I’ll give anything a go. This is a WordPress blog, using a theme I’m evolving myself. My [company website[(http://elevenware.com) is build on <a href="http://sinatrarb.com">Sinatra</a>, and I have a spattering of Grails and Rails apps kicking around the Internet. It’s irrelevant. I’ve also written a bunch of messaging apps, and rich client apps, and all sorts of things, in ‘C’, Java, C#, whatever. None of them define me.</p>
-
-<p>So I have long disliked being called a “<something> developer” because “something” can mean so many different things. Now, I don’t like the developer bit, either. It’s not what I do any more. Here are some examples of things I do in my day job, which do not make me a developer, are not necessarily required in order to be called a developer, and which are also done by people who definitely are not developers:</p>
-
-<ul>
-<li>Provision servers</li>
-<li>Build continuous integration environments</li>
-<li>Script single-click deploys</li>
-<li>Coach developers on how to code</li>
-<li>Advise clients on their software architecture</li>
-<li>Advise clients on better approaches to requirements capture</li>
-<li>Help clients choose technology stacks for the right reasons</li>
-<li>Define development processes</li>
-<li>Challenge designs that seem inadequate or wrong</li>
-<li>Ask clients questions that lead them to figure out that they meant something other than they first thought they did</li>
-</ul>
-
-
-<p><a href="http://en.wikipedia.org/wiki/Weasel_word">Many will argue</a> that some or all of the above is actually still within the remit of the developer. That doesn’t change the fact that when civilians hear the word “developer”, none of the above leap to mind. All that leaps to mind is “he writes gobbledegook on a screen, and makes a computer do something”.</p>
-
-<p>So what do I do? I have no idea. I do something&#8230;with software&#8230;</p>
-
-<p>I can write software. I can help others write it. I can take it from being an idea, to the inkling of a plan, to being source code, to being a tested, deployed artefact. I can decide what sort of platform to build it on. I can often build those platforms, in nice efficient, repeatable ways. I can script. I can automate stuff. I can motivate people. I can test stuff, I can even write automated tests. I can spot when a practice is worth doing, and when it might not be, after all.</p>
-
-<p>I can’t define what I do in simple terms, but that’s ok. I’m betting that most people can’t, if they try hard enough not to.</p>
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://georgemcntosh.com/vcr-and-aruba/" data-via="georgemcintosh" data-counturl="http://georgemcntosh.com/vcr-and-aruba/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
 </div>
-  
-  
 
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/whats-my-job/" title="Previous Post: What's my job, again?">&laquo; What's my job, again?</a>
+      
+      
+        <a class="basic-alignment right" href="/joann/" title="Next Post: JoAnn">JoAnn &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
 
-    </article>
-  
-  <div class="pagination">
-    
-    <a href="/blog/archives">Blog Archives</a>
-    
-  </div>
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
 </div>
+  </section>
+
+</div>
+
 <aside class="sidebar">
   
     <section>
@@ -590,7 +422,7 @@ void keepOnTesting() {}
       </li>
     
       <li class="post">
-        <a href="/whats-my-job/">What&#8217;s my job, again?</a>
+        <a href="/whats-my-job/">What's my job, again?</a>
       </li>
     
   </ul>
@@ -600,7 +432,7 @@ void keepOnTesting() {}
 <section>
   <h1>Latest Tweets</h1>
   <ul id="tweets">
-    <li class="loading">Status updating&#8230;</li>
+    <li class="loading">Status updating...</li>
   </ul>
   <script type="text/javascript">
     $.domReady(function(){
@@ -620,6 +452,7 @@ void keepOnTesting() {}
   
 </aside>
 
+
     </div>
   </div>
   <footer role="contentinfo"><p>
@@ -634,7 +467,10 @@ void keepOnTesting() {}
       var disqus_shortname = 'georgemcintosh';
       
         
-        var disqus_script = 'count.js';
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://georgemcntosh.com/vcr-and-aruba/';
+        var disqus_url = 'http://georgemcntosh.com/vcr-and-aruba/';
+        var disqus_script = 'embed.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
