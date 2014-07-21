@@ -129,7 +129,7 @@
 <p>Yeh, that leaks processes. Sorry. Easily solved, though, with a shutdown hook. Try this instead:</p>
 
 <pre><code>eventCompileStart = { msg -&gt;
-    def process = "grunt".execute()
+    final def process = "grunt".execute()
     process.comsumeProcessOutput(System.out, System.err)
     Thread shutdown = new Thread(
         new Runnable() {
@@ -140,7 +140,7 @@
            }
 
         }
-    })
+    )
 
     Runtime.runtime.addShutdownHook(shutdown)
 }
@@ -152,30 +152,35 @@
 
 <p>As I hinted at not being a massive fan of Grails plugins for everything. Don&#8217;t get me wrong, they&#8217;re often really wonderful things, that get you integrating something sexy into your Grails app with little fuss. The ElasticSearch plugin, for example, does a <em>lot</em> of heavy lifting for you. But sometimes, as with the sass compiler, they&#8217;re more hassle than they&#8217;re worth. It really makes no sense for the back-end of your app to dictate what front-end libraries you can use. So today I&#8217;m going to stop using the JQuery plugin, and start providing JQuery myself. And in the spirit of using front-end tools for front-end work, I&#8217;m going to manage that dependency with Bower. If you don&#8217;t know, Bower is a dependency management tool for webapps. It uses a manifest file to describe dependencies, and fetches them from repositories on demand. You know the drill.</p>
 
-<p>Here&#8217;s our manifest, it&#8217;s called bower.json, and it lives in the root of our project.</p>
+<p>Create a file called bower.json, that looks like this</p>
 
 <pre><code>{
-    "name": "shiny-shiny",
-    "version": "1.0.0",
-    "authors": [
-        "George McIntosh &lt;george@georgemcintosh.com&gt;"
-    ],
-    "license": "MIT",
-    "dependencies": {
-        "jquery": "1.11.1"
-    }
+  "name": "shiny-shiny",
+  "version": "0.0.0",
+  "homepage": "https://github.com/georgecodes/shiny-shiny",
+  "authors": [
+    "George McIntosh &lt;george@georgecodes.com&gt;"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
 }
 </code></pre>
 
 <p>If you have Bower installed, you can now run</p>
 
 <figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>$ bower install</span></code></pre></td></tr></table></div></figure>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ bower install jquery#1.9.1 --save</span></code></pre></td></tr></table></div></figure>
 
 
-<p>and JQuery will be fetched from &#8216;t&#8217;internet, and bunged into a folder called bower_components. Handy, eh? No, not really. Not yet, anyway. That&#8217;s ok, we&#8217;re going to use some Grunt magic to make this dependency available to our app at runtime.</p>
+<p>and JQuery will be fetched from &#8216;t&#8217;internet, bunged into a folder called bower_components and an entry will be created in bower.json to boot. Handy, eh? No, not really. Not yet, anyway. That&#8217;s ok, we&#8217;re going to use some Grunt magic to make this dependency available to our app at runtime.</p>
 
-<p>Grunt is a bit like Maven. Except you don&#8217;t want to kill yourself within five minutes of using it. But it&#8217;s like Maven in that it all revolves around plugins. We&#8217;re going to use one to grab the goodies from our JQuery package, and provide it to our app. We <em>could</em> just tell Bower to change the directory it downloads dependencies to, but Bower dependencies are not just the distribution, they come with a bunch of other stuff. Mostly because currently, Bower just grabs git repos. So we&#8217;re going to use a couple of Grunt plugins - or &#8216;tasks&#8217; - to do some magic for us. The first one is the Grunt Bower task, and the second one is the Grunt copy contribution. Here&#8217;s where people sometimes get a bit confused. We&#8217;re actually dealing with two dependency management packages at once here: NPM <strong>and</strong> Bower. NPM is what we&#8217;re using to manage dependencies for our build system, and Bower is what we&#8217;re using to manage dependencies for the front-end of our app. Of course, we&#8217;re also using BuildConfig to manage dependencies for the back-end of the app, which makes for three different dependency management thingies. <del>Maybe Maven isn&#8217;t so bad after all</del> no no no, I never said that.</p>
+<p>Grunt is a bit like Maven. Except you don&#8217;t want to kill yourself within five minutes of using it. But it&#8217;s like Maven in that it all revolves around plugins. We&#8217;re going to use one to grab the goodies from our JQuery package, and provide it to our app, in a layout we like. We <em>could</em> just tell Bower to change the directory it downloads dependencies to, but Bower dependencies are not just the distribution, they come with a bunch of other stuff. Mostly because currently, Bower just grabs git repos. So we&#8217;re going to use a bit of config to achieve that. But first, we need the right package. Here&#8217;s where people sometimes get a bit confused. We&#8217;re actually dealing with two dependency management packages at once here: NPM <strong>and</strong> Bower. NPM is what we&#8217;re using to manage dependencies for our build system, and Bower is what we&#8217;re using to manage dependencies for the front-end of our app. Of course, we&#8217;re also using BuildConfig to manage dependencies for the back-end of the app, which makes for three different dependency management thingies. <del>Maybe Maven isn&#8217;t so bad after all</del> no no no, I never said that.</p>
 
 <p>Anyways, we&#8217;re giving our grunt build system something to do, so we&#8217;re using NPM to declare these particular dependencies. Update your package.json so it looks like this</p>
 
@@ -186,13 +191,43 @@
         "node-sass": "~0.7.0",
         "grunt": "~0.4.1",
         "grunt-sass": "~0.8.0",
-        "grunt-bower-task": "git://github.com/georgecodes/grunt-bower-task.git#master",
-        "grunt-contrib-copy": "^0.5.0",
+        "grunt-contrib-watch": "~0.5.3",
+          "grunt-bower-task": "git://github.com/georgecodes/grunt-bower-task.git#master"
     }   
 }
 </code></pre>
 
-<p>Note that the most recent grunt-bower-task brings in an outdated, buggy version of grunt that&#8217;s annoying, so I&#8217;ve forked it and fixed it. I&#8217;ve issued a pull request, but at time of writing it hasn&#8217;t been accepted. Or maybe NPM allows fine-grained control of transitive dependencies, like Maven does. I didn&#8217;t find anything about it, feel free to correct me.</p>
+<p><del>Note that the most recent grunt-bower-task brings in an outdated, buggy version of grunt that&#8217;s annoying, so I&#8217;ve forked it and fixed it. I&#8217;ve issued a pull request, but at time of writing it hasn&#8217;t been accepted.</del> Haha disregard that, it&#8217;s <a href="https://github.com/yatskevich/grunt-bower-task/blob/devel/package.json">fixed</a>. Or maybe NPM allows fine-grained control of transitive dependencies, like Maven does. I didn&#8217;t find anything about it, feel free to correct me.</p>
+
+<p>Remember I said that Bower packages are just the entire Git repo? Well, we don&#8217;t want that, we just want the JQuery distribution. Bower packages <em>can</em> specify exports. They don&#8217;t have to. JQuery doesn&#8217;t. But we can configure them ourselves. Here&#8217;s what our bower.json looks like now:</p>
+
+<pre><code>{
+  "name": "shiny-shiny",
+  "version": "0.0.0",
+  "homepage": "https://github.com/georgecodes/shiny-shiny",
+  "authors": [
+    "George McIntosh &lt;george@georgecodes.com&gt;"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "1.9.1"
+  },
+    "exportsOverride": {
+      "jquery": {
+          "js": "jquery.js"
+      }
+    }
+}
+</code></pre>
+
+<p>We&#8217;ve said &#8220;just give us the distro, thanks&#8221;.</p>
 
 <p>So now we can introduce our grunt config.</p>
 
@@ -210,6 +245,7 @@
                 }
             }
         },
+
         watch: {
             grunt: { files: ['Gruntfile.js'] },
 
@@ -220,32 +256,119 @@
         },
         bower: {
             install: {
-
+                options: {
+                    cleanTargetDir: true,
+                    cleanBowerDir: true,
+                    targetDir: 'web-app/js/lib',
+                    layout: function(type, component) {
+                        return '';
+                    }
+                }
             }
-        },
-        copy: {
-            libs: {
-                files: [
-                 {
-                   expand: true, flatten: true, filter: 'isFile',
-                src: [
-                  'bower_components/query/jquery/jquery.js'
-                ],
-                dest: 'grails-app/assets/javascripts'
-            }
-          ]
         }
     });
 
     grunt.loadNpmTasks('grunt-sass');
     grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-bower-task');
-    grunt.loadNpmTasks('grunt-contrib-copy');
 
     grunt.registerTask('build', ['sass']);
+    grunt.registerTask('bootstrap', ['bower:install']);
     grunt.registerTask('default', ['build','watch']);
 }
 </code></pre>
+
+<p>We&#8217;ve added a bower task, and we&#8217;ve configured it to export the distribution to our grails app. That &#8216;layout&#8217; function we provide is just a hack to flatten the file structure out a bit. By default we&#8217;d have a bunch of extra folders that we don&#8217;t really want. We just want the library.</p>
+
+<p>Now, if we run</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ grunt bootstrap</span></code></pre></td></tr></table></div></figure>
+
+
+<p>we see that grunt uses Bower to grap JQuery, and then stick the resultant library in our grails app&#8217;s web-app dir. It also does a bit of cleaning up after itself, removing the bower_components directory.</p>
+
+<p>Ok, so now we can just declare JQuery like any other resource. Let&#8217;s do that. First, free yourself from the chains of the JQuery plugin; delete it from BuildConfig.groovy. Now declare a jquery lib in ApplicationResources.groovy</p>
+
+<pre><code>modules = {
+
+    jquery {
+        resource url: 'js/lib/jquery.js'
+    }
+
+}
+</code></pre>
+
+<p>and put</p>
+
+<pre><code>&lt;r:require module="jquery"/&gt;
+</code></pre>
+
+<p>somewhere in your GSPs. You know the drill. Now, fire up the app, and you&#8217;re serving up your own, dependency-managed JQuery. Hooray! A bit of refactoring of the gruntfile. and we can delete grails-app/assets altogether.</p>
+
+<pre><code>module.exports = function(grunt) {
+    grunt.initConfig({
+        pkg: grunt.file.readJSON('package.json'),
+
+        sass: {
+            dist: {
+                options: {
+                    outputStyle: 'compressed'
+                },
+                files: {
+                    'web-app/css/main.css': 'web-app/scss/main.scss'
+                }
+            }
+        },
+
+        watch: {
+            grunt: { files: ['Gruntfile.js'] },
+
+            sass: {
+                files: 'web-app/scss/**/*.scss',
+                tasks: ['sass']
+            }
+        },
+        bower: {
+            install: {
+                options: {
+                    cleanTargetDir: true,
+                    cleanBowerDir: true,
+                    targetDir: 'web-app/js/lib',
+                    layout: function(type, component) {
+                        return '';
+                    }
+                }
+            }
+        }
+    });
+
+    grunt.loadNpmTasks('grunt-sass');
+    grunt.loadNpmTasks('grunt-contrib-watch');
+    grunt.loadNpmTasks('grunt-bower-task');
+
+    grunt.registerTask('build', ['sass']);
+    grunt.registerTask('bootstrap', ['bower:install']);
+    grunt.registerTask('default', ['build','watch']);
+}
+</code></pre>
+
+<p>So our current workflow is to use</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ grunt bootstrap</span></code></pre></td></tr></table></div></figure>
+
+
+<p>To fetch and avail JQuery to our app, and to just grails run-app to compile and serve Sassy scss. There are, of course, a number of ways of simplifying this, but that&#8217;s for another time. All that remains is to add a few things to our .gitignore, and we&#8217;re away. We don&#8217;t really want to check in any generated or otherwise managed code, y&#8217;see:</p>
+
+<pre><code>target
+shiny-shiny.iml
+node_modules
+web-app/js/lib
+web-app/css/**
+</code></pre>
+
+<p>Code for this post is, as always, <a href="https://github.com/georgecodes/shiny-shiny">on GitHub</a>.</p>
 </div>
   
   
